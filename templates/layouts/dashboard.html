@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>DocuAI Dashboard</title>
+
+    <!-- Google Font -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="dashboard.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- =========================
+            SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div>
+
+            <div class="logo">
+
+                <div class="logo-icon">
+
+                    <i class="fa-regular fa-file-lines"></i>
+
+                </div>
+
+                <span>DocuAI</span>
+
+            </div>
+
+            <ul class="menu">
+
+                <li class="active">
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-table-cells-large"></i>
+
+                        Dashboard
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+
+                        History
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a href="#">
+
+                        <i class="fa-solid fa-gear"></i>
+
+                        Profile
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- User -->
+
+        <div class="sidebar-footer">
+
+            <div class="user">
+
+                <img src="https://i.pravatar.cc/80"
+                     alt="user">
+
+                <div>
+
+                    <h4>Moez Janjua</h4>
+
+                    <p>moezjanjua62@gmail.com</p>
+
+                </div>
+
+            </div>
+
+            <a href="#"
+               class="logout">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                Sign out
+
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- =========================
+            MAIN CONTENT
+    ========================== -->
+
+    <main class="main-content">
+
+        <!-- Header -->
+
+        <div class="page-header">
+
+            <h1>Dashboard</h1>
+
+            <p>Manage and analyze your PDF documents</p>
+
+        </div>
+
+        <!-- =========================
+                STATS
+        ========================== -->
+
+        <div class="stats">
+
+            <!-- Card -->
+
+            <div class="stat-card">
+
+                <span>Total Documents</span>
+
+                <h2>1</h2>
+
+                <div class="progress">
+
+                    <div class="progress-fill fill1"></div>
+
+                </div>
+
+            </div>
+
+            <!-- Card -->
+
+            <div class="stat-card">
+
+                <span>Storage Used</span>
+
+                <h2>55.66 KB</h2>
+
+                <div class="progress">
+
+                    <div class="progress-fill fill2"></div>
+
+                </div>
+
+            </div>
+
+            <!-- Card -->
+
+            <div class="stat-card">
+
+                <span>AI Requests This Month</span>
+
+                <h2>1</h2>
+
+                <div class="progress">
+
+                    <div class="progress-fill fill3"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+            CONTENT GRID STARTS
+        ========================== -->
+
+        <div class="content-grid">
+
+            <!-- =========================
+                    UPLOAD SECTION
+            ========================== -->
+
+            <section class="upload-section">
+
+                <div class="upload-box">
+
+                    <div class="upload-icon">
+
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+
+                    </div>
+
+                    <h2>Upload PDF Document</h2>
+
+                    <p>
+
+                        Drag and drop your file here,
+                        or click to browse.
+
+                    </p>
+
+                    <span>Supported format: PDF.</span>
+
+                    <input
+                        type="file"
+                        id="pdfFile"
+                        accept=".pdf"
+                        hidden>
+
+                    <button
+                        onclick="document.getElementById('pdfFile').click()">
+
+                        Select File
+
+                    </button>
+
+                </div>
+
+                <!-- =========================
+                        RECENT DOCUMENTS
+                ========================== -->
+
+                <div class="recent-documents">
+
+                    <h2>Recent Documents</h2>
+
+                    <div class="document-card">
+
+                        <div class="document-top">
+
+                            <div class="document-info">
+
+                                <div class="document-icon">
+
+                                    <i class="fa-regular fa-file-pdf"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <h3>Mukammal khan</h3>
+
+                                    <p>about 1 hour ago</p>
+
+                                </div>
+
+                            </div>
+
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+
+                        </div>
+
+                        <div class="document-bottom">
+
+                            <span>55.66 KB</span>
+
+                            <span>•</span>
+
+                            <span>? pages</span>
+
+                            <span class="status">
+
+                                ready
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- =========================
+                    RECENT ACTIVITY
+            ========================== -->
+
+            <aside class="activity-panel">
+
+                <h2>
+
+                    <i class="fa-solid fa-wave-square"></i>
+
+                    Recent Activity
+
+                </h2>
+
+                <div class="activity-item">
+
+                    <div class="activity-icon">
+
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h4>
+
+                            Upload on Mukammal khan
+
+                        </h4>
+
+                        <p>
+
+                            about 1 hour ago
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

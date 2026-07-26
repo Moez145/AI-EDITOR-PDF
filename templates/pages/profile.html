@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Profile | DocuAI</title>
+
+    <!-- Google Font -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="{{url_for('static',path='css/profile.css')}}">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+
+    <!-- =========================
+            MAIN CONTENT
+    ========================== -->
+
+    <main class="main-content">
+
+        <div class="page-header">
+
+            <h1>Account Settings</h1>
+
+            <p>
+
+                Manage your personal information and preferences
+
+            </p>
+
+        </div>
+
+        <div class="profile-container">
+
+            <!-- ======================
+                    LEFT CARD
+            ======================= -->
+
+            <div class="profile-card">
+
+                <div class="profile-image">
+
+                    <img src="https://i.pravatar.cc/180"
+                         alt="Profile">
+
+                </div>
+
+                <hr>
+
+                <div class="profile-info">
+
+                    <div class="info-item">
+
+                        <i class="fa-regular fa-calendar"></i>
+
+                        <span id="user"></span>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <i class="fa-regular fa-envelope"></i>
+
+                        <span id="email_profile"></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ======================
+                    RIGHT CARD
+            ======================= -->
+
+            <div class="settings-card">
+
+                <h2>Personal Information</h2>
+
+                <p>
+
+                    Update your name as it appears across DocuAI.
+
+                </p>
+
+                <form>
+                    <div class="form-row">
+
+                        <div class="form-group" >
+
+                            <label>
+
+                                First Name
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="first-name"
+                                placeholder="Jane"
+                                value="">
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label >
+
+                                Email
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="email_profile_Setting"
+                                placeholder="example@gmail.com"
+                                value="">
+
+                        </div>
+
+                         <div class="form-group">
+
+                            <label >
+
+                                Updated Password
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="password_profile"
+                                placeholder="New Password"
+                                value="">
+
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="save-btn"
+                        id="save_btn">
+
+                        Save Changes
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+<script src="{{url_for('static',path='js/profile.js')}}"></script>
+
+</body>
+
+</html>

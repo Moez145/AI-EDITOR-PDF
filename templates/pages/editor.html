@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuAI - Intelligent PDF Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{url_for('static',path='css/editor.css')}}">
+</head>
+
+<body>
+
+    <div class="editor-layout" id="editor_layout">
+
+        <!-- ===== DOCUMENT PANEL ===== -->
+        <section class="document-panel" id="documentPanel">
+            <div class="document-header">
+                <div class="file-icon">
+                    <i class="fa-regular fa-file-pdf"></i>
+                </div>
+                <div>
+                    <h3>Document</h3>
+                    <p id="file-info">0 KB • pages</p>
+                </div>
+            </div>
+            <div class="thumbnail-list" id="thumbnail_list_sidebar">
+                <div class="thumbnail-item">
+                    <div class="thumbnail active-thumb"></div>
+                    <p class="page-label">Page 1</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== PDF VIEWER ===== -->
+        <section class="pdf-viewer" id="pdf_viewer">
+
+            <!-- TOP NAV BAR -->
+            <div class="top-navbar">
+                <!-- Left: Logo + Brand -->
+                <div class="navbar-brand">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <span class="brand-name">DocuAI</span>
+                </div>
+
+                <!-- Center: Toolbar Controls -->
+                <div class="viewer-toolbar">
+                    <div class="toolbar-group">
+                        <button class="icon-btn" id="zoomOut" title="Zoom Out">
+                            <i class="fa-solid fa-magnifying-glass-minus"></i>
+                        </button>
+                        <span class="zoom-value">100%</span>
+                        <button class="icon-btn" id="zoomIn" title="Zoom In">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                    </div>
+                    <div class="toolbar-divider"></div>
+                    <div class="toolbar-group">
+                        <button class="icon-btn" id="prevPage" title="Previous Page">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <input type="number" value="1" class="page-input" min="1" max="4">
+                        <span class="page-count">/ 4</span>
+                        <button class="icon-btn" id="nextPage" title="Next Page">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="toolbar-divider"></div>
+                    <button class="download-btn">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="btn-label">Download</span>
+                    </button>
+                    <button>
+                        <i class=""></i>
+                        <span class="pdf_editor_btn_1" style="color: aliceblue;">PDF EDITOR</span>
+                    </button>
+                </div>
+
+                <!-- Right: AI Toggle + Signout -->
+                <div class="navbar-actions">
+                    <button class="ai-toggle-btn" id="aiToggleBtn" title="Toggle AI Panel">
+                        <i class="fa-solid fa-robot"></i>
+                        <span class="btn-label">AI Assistant</span>
+                    </button>
+                    <div class="nav-divider"></div>
+                    <div class="user-info">
+                        <img src="https://i.pravatar.cc/80?u=default" alt="User" class="user-avatar">
+                        <span class="user-name" id="username">User</span>
+                    </div>
+                    <a href="#" class="signout-btn" id="logout" title="Sign Out">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span class="btn-label">Sign Out</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PDF Canvas -->
+            <div class="pdf-placeholder">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+        </section>
+
+        <!-- ===== AI ASSISTANT PANEL ===== -->
+        <aside class="ai-panel" id="aiPanel">
+
+            <!-- Panel Header -->
+            <div class="ai-panel-header">
+                <div class="ai-panel-title">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI Assistant</span>
+                </div>
+                <button class="ai-close-btn" id="aiCloseBtn" title="Close Panel">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="ai-tabs">
+                <button class="tab active" data-tab="chat">
+                    <i class="fa-solid fa-comments"></i>
+                    Chat
+                </button>
+                <button class="tab" data-tab="summary">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Summary
+                </button>
+                <button class="tab" data-tab="analysis">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Analysis
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="action-btn">
+                    <i class="fa-regular fa-file-lines"></i>
+                    <span>Summarize</span>
+                </button>
+                <button class="action-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Extract</span>
+                </button>
+                <button class="action-btn">
+                    <i class="fa-solid fa-spell-check"></i>
+                    <span>Improve</span>
+                </button>
+            </div>
+
+            <!-- Chat Container (scrollable) -->
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-message ai-message">
+                    <div class="avatar ai-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="message">
+                        <h4>DocuAI Assistant</h4>
+                        <p>Hello! Upload a PDF to get started. I can summarize, analyze, and extract information from
+                            your documents.</p>
+                    </div>
+                </div>
+                <div class="chat-message user-message">
+                    <div class="message user-msg-body">
+                        <p>Can you summarize the document?</p>
+                    </div>
+                    <div class="avatar user-avatar-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+                <div class="chat-message ai-message">
+                    <div class="avatar ai-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="message">
+                        <h4>DocuAI Assistant</h4>
+                        <p>Sure! Please upload a PDF first and I'll provide a detailed summary for you.</p>
+                    </div>
+                </div>
+                <div class="chat-message ai-message">
+                    <div class="avatar ai-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="message">
+                        <h4>DocuAI Assistant</h4>
+                        <p>I can also extract key data points, improve the text quality, or answer specific questions
+                            about the content.</p>
+                    </div>
+                </div>
+                <div class="chat-message ai-message">
+                    <div class="avatar ai-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="message">
+                        <h4>DocuAI Assistant</h4>
+                        <p>What would you like to do with your document today?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-wrapper">
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Ask me anything..." autocomplete="off">
+                    <button class="send-btn" id="sendBtn" title="Send">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <p class="chat-footer">AI can make mistakes. Always verify important information.</p>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Mobile AI Overlay Backdrop -->
+    <div class="ai-backdrop" id="aiBackdrop"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="{{ url_for('static', path='js/editor.js') }}"></script>
+    </script>
+</body>
+
+</html>

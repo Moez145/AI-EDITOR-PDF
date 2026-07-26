@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DocuAI Dashboard</title>
+
+    <!-- Google Font -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" href="{{url_for('static',path='css/dashboard.css')}}">
+
+</head>
+
+<body>
+
+    <div class="dashboard" id='dashboard'>
+
+        <!-- =========================
+            SIDEBAR
+    ========================== -->
+
+        <aside class="sidebar">
+
+            <div>
+
+                <div class="logo">
+
+                    <div class="logo-icon">
+
+                        <i class="fa-regular fa-file-pdf"></i>
+
+                    </div>
+
+                    <span>DocuAI</span>
+
+                </div>
+
+                <ul class="menu">
+
+                    <li class="active">
+
+                        <a href="/dashboard" onclick="loadPage('/dashboard/content')">
+
+                            <i class="fa-solid fa-table-cells-large"></i>
+
+                            Dashboard
+
+                        </a>
+
+                    </li>
+
+                    <li>
+
+                        <a href="#" id="history">
+
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+
+                            History
+
+                        </a>
+
+                    </li>
+
+                    <li>
+
+                        <a href="#" id="profile">
+
+                            <i class="fa-solid fa-gear"></i>
+
+                            Profile
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </div>
+
+            <!-- User -->
+
+            <div class="sidebar-footer">
+
+                <div class="user">
+
+                    <img src="https://i.pravatar.cc/80" alt="user">
+
+                    <div>
+
+                        <h4 id="username"></h4>
+
+                        <p id="email"></p>
+
+                    </div>
+
+                </div>
+
+                <a href="#" class="logout" id="logout">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                    Sign out
+
+                </a>
+
+            </div>
+
+        </aside>
+
+        <!-- =========================
+            MAIN CONTENT
+    ========================== -->
+
+        <main class="main-content">
+
+            <!-- Header -->
+
+            <div class="page-header">
+
+                <h1>Dashboard</h1>
+
+                <p>Manage and analyze your PDF documents</p>
+
+            </div>
+
+            <!-- =========================
+                STATS
+        ========================== -->
+
+            <div class="stats">
+
+                <!-- Card -->
+
+                <div class="stat-card">
+
+                    <span>Total Documents</span>
+                    <h1 id="total_Documents">0</h1>
+                        <div class="progress">
+                            <div class="progress-fill fill1"></div>
+                        </div>
+                </div>
+
+                <!-- Card -->
+                <div class="stat-card">
+                    <span>Storage Used</span>
+                    <h2 id="storage_Used">0 KB</h2>
+                    <div class="progress">
+                        <div class="progress-fill fill2"></div>
+                    </div>
+                </div>
+
+                <!-- Card -->
+
+                <div class="stat-card">
+
+                    <span>AI Requests This Month</span>
+
+                    <h2 id="ai_Requests">0</h2>
+
+                    <div class="progress">
+
+                        <div class="progress-fill fill3"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- =========================
+            CONTENT GRID STARTS
+        ========================== -->
+
+            <div class="content-grid">
+                <!-- =========================
+                    UPLOAD SECTION
+            ========================== -->
+
+                <section class="upload-section">
+
+                    <div class="upload-box">
+
+                        <div class="upload-icon">
+
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+
+                        </div>
+
+                        <h2>Upload PDF Document</h2>
+
+                        <p>
+
+                            Drag and drop your file here,
+                            or click to browse.
+
+                        </p>
+
+                        <span>Supported format: PDF.</span>
+
+                        <input type="file" id="pdfFile" accept=".pdf" hidden>
+
+                        <button id="Upload_Button">
+
+                            Select File
+
+                        </button>
+
+                    </div>
+
+                    <!-- =========================
+                        RECENT DOCUMENTS
+                ========================== -->
+
+                    <div class="recent-documents">
+
+                        <h2>Recent Documents</h2>
+
+                        <div id="recent_Documents">
+
+                            <!-- Documents will be loaded dynamically -->
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- =========================
+                    RECENT ACTIVITY
+            ========================== -->
+
+                <aside class="activity-panel">
+
+                    <h2>
+
+                        <i class="fa-solid fa-wave-square"></i>
+
+                        Todays Activity
+
+                    </h2>
+
+                    <div id="recentActivity">
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </main>
+
+    </div>
+    <script src="{{url_for('static',path='js/upload.js')}}"></script>
+    <script src="{{ url_for('static', path='js/dashboard.js') }}"></script>
+</body>
+
+</html>

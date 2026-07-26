@@ -1,0 +1,535 @@
+/*==========================================
+    GOOGLE FONT
+==========================================*/
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+a{
+    text-decoration:none;
+}
+
+body{
+
+    font-family:'Inter',sans-serif;
+
+    background:#f6f8fc;
+
+    overflow:hidden;
+
+    color:#111827;
+
+}
+
+/*==========================================
+    BACKGROUND
+==========================================*/
+
+.background{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+    radial-gradient(circle at top left,
+    rgba(91,61,245,.10),
+    transparent 40%),
+
+    radial-gradient(circle at bottom right,
+    rgba(124,58,237,.10),
+    transparent 45%),
+
+    linear-gradient(
+        to bottom,
+        #f9fbff,
+        #eef2ff
+    );
+
+    z-index:-2;
+
+}
+
+.background::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:350px;
+    height:350px;
+
+    background:#6c4eff22;
+
+    border-radius:50%;
+
+    top:-120px;
+    left:-120px;
+
+    filter:blur(90px);
+
+}
+
+.background::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:350px;
+    height:350px;
+
+    background:#7c3aed22;
+
+    border-radius:50%;
+
+    right:-120px;
+    bottom:-120px;
+
+    filter:blur(90px);
+
+}
+
+/*==========================================
+    LOGIN SECTION
+==========================================*/
+
+.login-section{
+
+    width:100%;
+
+    height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:25px;
+
+}
+
+/*==========================================
+    CARD
+==========================================*/
+
+.login-card{
+
+    width:440px;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:45px 40px;
+
+    box-shadow:
+    0 20px 60px rgba(15,23,42,.10);
+
+    border:1px solid #ececec;
+
+    animation:fadeUp .6s ease;
+
+}
+
+/*==========================================
+    TITLE
+==========================================*/
+
+.login-card h2{
+
+    font-size:34px;
+
+    text-align:center;
+
+    font-weight:800;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#64748b;
+
+    margin-bottom:35px;
+
+    line-height:1.6;
+
+}
+
+/*==========================================
+    GOOGLE BUTTON
+==========================================*/
+
+.google-btn{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:white;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:12px;
+
+    padding:15px 18px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.05);
+
+}
+
+.google-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+
+}
+
+.google-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+}
+
+.google-left img{
+
+    width:24px;
+
+}
+
+.google-left span{
+
+    font-size:16px;
+
+    font-weight:500;
+
+}
+
+.google-btn small{
+
+    color:#64748b;
+
+    font-size:12px;
+
+}
+
+/*==========================================
+    DIVIDER
+==========================================*/
+
+.divider{
+
+    margin:30px 0;
+
+    text-align:center;
+
+    position:relative;
+
+}
+
+.divider::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:50%;
+
+    left:0;
+
+    width:42%;
+
+    height:1px;
+
+    background:#e5e7eb;
+
+}
+
+.divider::after{
+
+    content:"";
+
+    position:absolute;
+
+    top:50%;
+
+    right:0;
+
+    width:42%;
+
+    height:1px;
+
+    background:#e5e7eb;
+
+}
+
+.divider span{
+
+    background:white;
+
+    padding:0 12px;
+
+    color:#64748b;
+
+}
+
+/*==========================================
+    FORM
+==========================================*/
+
+form{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+label{
+
+    font-weight:600;
+
+    margin-bottom:10px;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:16px;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:12px;
+
+    outline:none;
+
+    font-size:16px;
+
+    transition:.3s;
+
+}
+
+input:focus{
+
+    border-color:#5B3DF5;
+
+    box-shadow:
+    0 0 0 4px rgba(91,61,245,.15);
+
+}
+
+/*==========================================
+    CONTINUE BUTTON
+==========================================*/
+
+.continue-btn{
+
+    margin-top:28px;
+
+    width:100%;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:16px;
+
+    cursor:pointer;
+
+    background:linear-gradient(
+        135deg,
+        #6544ff,
+        #4B2FE2
+    );
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:10px;
+
+    box-shadow:
+    0 12px 30px rgba(91,61,245,.30);
+
+}
+
+.continue-btn:hover{
+
+    transform:translateY(-3px);
+
+}
+
+/*==========================================
+    SIGNUP
+==========================================*/
+
+.signup{
+
+    margin-top:35px;
+
+    text-align:center;
+
+    color:#64748b;
+
+}
+
+.signup a{
+
+    color:#5B3DF5;
+
+    text-decoration:none;
+
+    font-weight:700;
+
+}
+
+.signup a:hover{
+
+    text-decoration:underline;
+
+}
+
+/*==========================================
+    DEVELOPMENT
+==========================================*/
+
+.development{
+
+    margin-top:35px;
+
+    text-align:center;
+
+    color:#f97316;
+
+    font-size:14px;
+
+    font-weight:500;
+
+}
+
+/*==========================================
+    ANIMATION
+==========================================*/
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/*==========================================
+    RESPONSIVE
+==========================================*/
+
+@media(max-width:768px){
+
+    .login-card{
+
+        width:100%;
+
+        padding:35px 25px;
+
+    }
+
+    .login-card h2{
+
+        font-size:28px;
+
+    }
+
+    .subtitle{
+
+        font-size:15px;
+
+    }
+
+}
+
+@media(max-width:480px){
+
+    .login-card{
+
+        border-radius:18px;
+
+        padding:30px 20px;
+
+    }
+
+    .login-card h2{
+
+        font-size:24px;
+
+    }
+
+    .google-btn{
+
+        padding:14px;
+
+    }
+
+    input{
+
+        padding:14px;
+
+    }
+
+    .continue-btn{
+
+        padding:15px;
+
+        font-size:16px;
+
+    }
+
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuAI | Sign In</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{url_for('static',path='css/sign_in.css')}}">
+</head>
+
+<body>
+
+    <div class="background"></div>
+
+    <section class="login-section">
+
+        <div class="login-card">
+
+            <h2>Welcome back to DocuAI</h2>
+
+            <p class="subtitle">
+                Sign in to access your intelligent workspace
+            </p>
+
+            <!-- Google Login -->
+
+            <button class="google-btn">
+
+                <div class="google-left">
+
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                        alt="Google">
+
+                    <span>Continue with Google</span>
+
+                </div>
+
+                <small>Last used</small>
+
+            </button>
+
+            <div class="divider">
+
+                <span>or</span>
+
+            </div>
+
+            <!-- Login Form -->
+
+            <form id="loginForm">
+
+                <label>Email address</label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Enter your email address"
+                    required>
+                
+                <label>Password</label>
+
+                <div class="password-box">
+                    <input 
+                    type="password"
+                    id="password"
+                    placeholder="Enter Your Password."
+                    required>
+                </div>
+
+                <button type="submit" class="continue-btn",id='go_editor'>
+                    Continue
+                    <i class="fa-solid fa-play"></i>
+                    </a>
+                </button>
+
+                <p id="message"></p>
+            </form>
+
+            <div class="signup">
+
+                Don't have an account?
+
+                <a href="/sign_up">Sign up</a>
+
+            </div>
+
+            <div class="development">
+
+                Development mode
+
+            </div>
+
+        </div>
+
+    </section>
+    <script src="{{url_for('static',path='js/signin.js')}}"></script>
+</body>
+
+</html>

@@ -1,0 +1,406 @@
+/*=========================================
+    GLOBAL
+=========================================*/
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#f7f9fc;
+    overflow:hidden;
+}
+
+a{
+    text-decoration:none;
+}
+
+.background{
+    position:fixed;
+    inset:0;
+    background:
+    radial-gradient(circle at top left,
+    rgba(91,61,245,.08),
+    transparent 40%),
+    radial-gradient(circle at bottom right,
+    rgba(91,61,245,.08),
+    transparent 40%),
+    linear-gradient(#f9fbff,#eef2ff);
+    z-index:-1;
+}
+
+/*=========================================
+    SIGNUP SECTION
+=========================================*/
+
+.signup-section{
+    width:100%;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/*=========================================
+    CARD
+=========================================*/
+
+.signup-card{
+
+    width:440px;
+    background:#fff;
+
+    border-radius:22px;
+
+    padding:45px;
+
+    border:1px solid #ececec;
+
+    box-shadow:0 20px 60px rgba(0,0,0,.08);
+
+}
+
+.signup-card h2{
+
+    text-align:center;
+    font-size:32px;
+    font-weight:800;
+    color:#111827;
+
+}
+
+.subtitle{
+
+    text-align:center;
+    color:#64748b;
+    margin-top:10px;
+    margin-bottom:30px;
+
+}
+
+/*=========================================
+    GOOGLE BUTTON
+=========================================*/
+
+.google-btn{
+
+    width:100%;
+
+    border:1px solid #e5e7eb;
+
+    background:#fff;
+
+    border-radius:12px;
+
+    padding:14px 20px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.google-btn:hover{
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+.google-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+.google-left img{
+
+    width:22px;
+
+}
+
+/*=========================================
+    DIVIDER
+=========================================*/
+
+.divider{
+
+    text-align:center;
+
+    margin:25px 0;
+
+    color:#94a3b8;
+
+    position:relative;
+
+}
+
+.divider::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:50%;
+
+    width:42%;
+
+    height:1px;
+
+    background:#e5e7eb;
+
+}
+
+.divider::after{
+
+    content:"";
+
+    position:absolute;
+
+    right:0;
+
+    top:50%;
+
+    width:42%;
+
+    height:1px;
+
+    background:#e5e7eb;
+
+}
+
+.divider span{
+
+    background:#fff;
+
+    padding:0 10px;
+
+}
+
+/*=========================================
+    FORM
+=========================================*/
+
+.form-group{
+
+    margin-bottom:25px;
+
+}
+
+label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+    color:#374151;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:15px;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:12px;
+
+    outline:none;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+input:focus{
+
+    border-color:#5B3DF5;
+
+    box-shadow:0 0 0 4px rgba(91,61,245,.12);
+
+}
+
+/*=========================================
+    PASSWORD
+=========================================*/
+
+.password-box{
+
+    position:relative;
+
+}
+
+.password-box input{
+
+    padding-right:50px;
+
+}
+
+.toggle-password{
+
+    position:absolute;
+
+    right:15px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    border:none;
+
+    background:none;
+
+    cursor:pointer;
+
+    color:#94a3b8;
+
+    font-size:18px;
+
+}
+
+.toggle-password:hover{
+
+    color:#5B3DF5;
+
+}
+
+/*=========================================
+    BUTTON
+=========================================*/
+
+.continue-btn{
+
+    width:100%;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:16px;
+
+    margin-top:10px;
+
+    background:linear-gradient(
+    135deg,
+    #6544ff,
+    #4B2FE2);
+
+    color:#fff;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+.continue-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 25px rgba(91,61,245,.30);
+
+}
+
+/*=========================================
+    SIGN IN LINK
+=========================================*/
+
+.signin{
+
+    margin-top:30px;
+
+    text-align:center;
+
+    color:#64748b;
+
+}
+
+.signin a{
+
+    color:#5B3DF5;
+
+    font-weight:700;
+
+}
+
+.signin a:hover{
+
+    text-decoration:underline;
+
+}
+
+/*=========================================
+    DEVELOPMENT
+=========================================*/
+
+.development{
+
+    margin-top:30px;
+
+    text-align:center;
+
+    color:#f97316;
+
+    font-size:14px;
+
+}
+
+/*=========================================
+    RESPONSIVE
+=========================================*/
+
+@media(max-width:480px){
+
+.signup-card{
+
+    width:100%;
+
+    padding:30px 20px;
+
+}
+
+.signup-card h2{
+
+    font-size:26px;
+
+}
+
+.subtitle{
+
+    font-size:14px;
+
+}
+
+}
