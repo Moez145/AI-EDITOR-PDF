@@ -196,6 +196,8 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     gap: var(--sp-md);
+    gap:15px;
+    padding:15px;
 }
 
 .thumbnail-list::-webkit-scrollbar {
@@ -226,6 +228,7 @@ input:focus-visible {
     border-radius: var(--radius-lg);
     border: 2px solid transparent;
     transition: var(--transition);
+    cursor:pointer;
     box-shadow: var(--shadow-sm);
 }
 
@@ -404,8 +407,13 @@ input:focus-visible {
     font-size: 13px;
 }
 
-/* Reusable primary button */
-.btn-primary {
+/* Reusable primary button
+   NOTE: .download-btn and .upload-btn are grouped into this selector
+   directly (rather than using SCSS @extend, which plain CSS doesn't
+   support) so the HTML can keep using its existing class names. */
+.btn-primary,
+.download-btn,
+.upload-btn {
     background: var(--gradient-primary);
     color: white;
     padding: var(--sp-sm) var(--sp-lg);
@@ -420,22 +428,19 @@ input:focus-visible {
     white-space: nowrap;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.download-btn:hover,
+.upload-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 16px var(--primary-glow);
 }
 
-.btn-primary:focus-visible {
+.btn-primary:focus-visible,
+.download-btn:focus-visible,
+.upload-btn:focus-visible {
     outline: 2px solid white;
     outline-offset: 2px;
 }
-.pdf_editor_btn_1{
-    color:#E0F2FE;
-}
-
-/* .download-btn {
-    @extend .btn-primary;
-} */
 
 /* Toggle button */
 .ai-toggle-btn {
@@ -594,8 +599,9 @@ input:focus-visible {
     max-width: 320px;
 }
 
+/* Size overrides for upload-btn (base styles come from the grouped
+   .btn-primary, .download-btn, .upload-btn rule above) */
 .upload-btn {
-    /* @extend .btn-primary; */
     padding: 11px 22px;
     font-size: 14px;
     gap: var(--sp-sm);

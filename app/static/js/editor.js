@@ -1,6 +1,6 @@
 /**
  * PDF Editor Application
- * Handles PDF rendering, zoom, navigation, and AI assistant panel
+ * Handles PDF rendering, zoom, navigation, thumbnails, and AI assistant panel
  */
 
 // ===============================================
@@ -18,6 +18,9 @@ const CONFIG = {
         PADDING: 40,
         DEBOUNCE_DELAY: 300
     },
+    THUMBNAIL: {
+        SCALE: 0.25
+    },
     AI_PANEL: {
         ANIMATION_DURATION: 350
     },
@@ -25,12 +28,6 @@ const CONFIG = {
         PDF_ENDPOINT: "/editor/pdf"
     }
 };
-// ==============================================
-// Editor Side Bar
-// ==============================================
-
-
-
 
 // ===============================================
 // STATE MANAGEMENT
@@ -74,8 +71,8 @@ const DOM = {
     // PDF Canvas
     canvas: document.getElementById("pdfCanvas"),
     ctx: null,
-    pdfCanvas: document.querySelector(".pdf-canvas"),
-    pdfPlaceholder: document.querySelector(".pdf-placeholder"),
+    pdfCanvas: document.querySelector(".pdf-canvas"),      // scroll container (for sizing)
+    pdfPlaceholder: document.getElementById("pdfPlaceholder"),
 
     // Navbar
     zoomValue: document.querySelector(".zoom-value"),
@@ -98,8 +95,8 @@ const DOM = {
     chatInput: document.getElementById("chatInput"),
     sendBtn: document.getElementById("sendBtn"),
 
-    // Thumbnails
-    thumbnailItems: document.querySelectorAll(".thumbnail-item"),
+    // Thumbnails (the scrollable list container in the sidebar)
+    thumbnailList: document.querySelector(".thumbnail-list"),
 
     // Initialize context
     init() {
@@ -144,6 +141,7 @@ class PDFRenderer {
             // Render to canvas with high-DPI support
             await this.renderToCanvas(page, viewport);
 
+            AppState.currentPage = pageNumber;
             UIManager.setLoading(false);
         } catch (error) {
             console.error("Error rendering page:", error);
@@ -197,14 +195,16 @@ class PDFRenderer {
             AppState.setPDF(pdfDoc);
 
             // Update UI
-            DOM.pageCount.textContent = `of ${AppState.totalPages}`;
+            DOM.pageCount.textContent = `/ ${AppState.totalPages}`;
             DOM.pageCount.setAttribute("aria-label", `Total pages: ${AppState.totalPages}`);
 
-            // Render first page
+            // Build sidebar thumbnails, then render first page
+            await ThumbnailManager.build(pdfDoc);
             await this.renderPage(AppState.currentPage);
 
             // Hide placeholder, show canvas
             DOM.pdfPlaceholder.style.display = "none";
+            DOM.canvas.style.display = "block";
 
             UIManager.setLoading(false);
         } catch (error) {
@@ -262,6 +262,8 @@ class PageNavigator {
         if (AppState.pdf) {
             PDFRenderer.renderPage(validPage);
         }
+
+        ThumbnailManager.setActive(validPage - 1);
     }
 
     static nextPage() {
@@ -308,37 +310,75 @@ class PageNavigator {
 // THUMBNAIL MANAGEMENT
 // ===============================================
 class ThumbnailManager {
+    /**
+     * Builds all sidebar thumbnails for the given pdf.js document
+     * and wires up click/keyboard handlers.
+     */
+    static async build(pdfDoc) {
+        const list = DOM.thumbnailList;
+        list.innerHTML = "";
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const viewport = page.getViewport({ scale: CONFIG.THUMBNAIL.SCALE });
+
+            const thumbCanvas = document.createElement("canvas");
+            thumbCanvas.width = viewport.width;
+            thumbCanvas.height = viewport.height;
+
+            await page.render({
+                canvasContext: thumbCanvas.getContext("2d"),
+                viewport: viewport
+            }).promise;
+
+            thumbCanvas.classList.add("thumbnail");
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "thumbnail-item";
+            wrapper.setAttribute("role", "button");
+            wrapper.setAttribute("tabindex", "0");
+            wrapper.setAttribute("aria-label", `Page ${i}`);
+
+            wrapper.appendChild(thumbCanvas);
+
+            const label = document.createElement("div");
+            label.className = "page-label";
+            label.innerText = `Page ${i}`;
+            wrapper.appendChild(label);
+
+            list.appendChild(wrapper);
+        }
+
+        this.setupListeners();
+        this.setActive(AppState.currentPage - 1);
+    }
+
     static setActive(index) {
-        DOM.thumbnailItems.forEach((item, i) => {
+        const items = document.querySelectorAll(".thumbnail-item");
+        items.forEach((item, i) => {
             const thumbnail = item.querySelector(".thumbnail");
+            if (!thumbnail) return;
             if (i === index) {
                 thumbnail.classList.add("active-thumb");
-                thumbnail.setAttribute("aria-current", "true");
+                item.setAttribute("aria-current", "true");
             } else {
                 thumbnail.classList.remove("active-thumb");
-                thumbnail.setAttribute("aria-current", "false");
+                item.setAttribute("aria-current", "false");
             }
         });
-
-        PageNavigator.setPage(index + 1);
     }
 
     static setupListeners() {
-        DOM.thumbnailItems.forEach((item, index) => {
-            item.addEventListener("click", () => this.setActive(index));
-            
-            // Keyboard accessibility
+        const items = document.querySelectorAll(".thumbnail-item");
+        items.forEach((item, index) => {
+            item.addEventListener("click", () => PageNavigator.setPage(index + 1));
+
             item.addEventListener("keydown", (e) => {
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    this.setActive(index);
+                    PageNavigator.setPage(index + 1);
                 }
             });
-
-            // Make thumbnail focusable
-            item.setAttribute("role", "button");
-            item.setAttribute("tabindex", "0");
-            item.setAttribute("aria-label", `Page ${index + 1}`);
         });
     }
 }
@@ -381,7 +421,6 @@ class AIPanelManager {
             }
         });
 
-        // Setup tab switching
         this.setupTabs();
     }
 
@@ -393,7 +432,6 @@ class AIPanelManager {
                 tab.setAttribute("aria-selected", "true");
             });
 
-            // Keyboard navigation for tabs
             tab.addEventListener("keydown", (e) => {
                 if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
                     e.preventDefault();
@@ -456,11 +494,9 @@ class ChatManager {
         const text = DOM.chatInput.value.trim();
         if (!text) return;
 
-        // Add user message
         this.addUserMessage(text);
         DOM.chatInput.value = "";
 
-        // Simulate AI response
         UIManager.setChatLoading(true);
         await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -531,20 +567,14 @@ class ResizeHandler {
 // ===============================================
 async function initializeApp() {
     try {
-        // Initialize PDF.js
         await PDFRenderer.initialize();
 
-        // Setup all event listeners
         ZoomManager.setupListeners();
         PageNavigator.setupListeners();
-        ThumbnailManager.setupListeners();
         AIPanelManager.setupListeners();
         ChatManager.setupListeners();
-
-        // Setup resize handling
         ResizeHandler.init();
 
-        // Get PDF ID from URL and token from storage
         const pdfId = window.location.pathname.split("/").pop();
         const token = localStorage.getItem("access_token");
 
@@ -553,10 +583,8 @@ async function initializeApp() {
             return;
         }
 
-        // Load PDF
         await PDFRenderer.loadPDF(pdfId, token);
 
-        // Set initial page input
         DOM.pageInput.value = AppState.currentPage;
         DOM.pageInput.setAttribute("max", AppState.totalPages);
         DOM.pageInput.setAttribute("aria-label", `Page 1 of ${AppState.totalPages}`);

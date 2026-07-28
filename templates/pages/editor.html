@@ -28,11 +28,9 @@
                     <p id="file-info">0 KB • pages</p>
                 </div>
             </div>
-            <div class="thumbnail-list" id="thumbnail_list_sidebar">
-                <div class="thumbnail-item">
-                    <div class="thumbnail active-thumb"></div>
-                    <p class="page-label">Page 1</p>
-                </div>
+
+            <div class="thumbnail-list">
+
             </div>
         </section>
 
@@ -101,8 +99,13 @@
             </div>
 
             <!-- PDF Canvas -->
-            <div class="pdf-placeholder">
-                <canvas id="pdfCanvas"></canvas>
+            <div class="pdf-canvas" id="pdfCanvasWrapper">
+                <div class="pdf-placeholder" id="pdfPlaceholder">
+                    <i class="fa-regular fa-file-pdf pdf-icon"></i>
+                    <h2>No PDF Loaded</h2>
+                    <p>Upload a document to preview it here.</p>
+                </div>
+                <canvas id="pdfCanvas" style="display:none;"></canvas>
             </div>
         </section>
 
@@ -221,7 +224,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="{{ url_for('static', path='js/editor.js') }}"></script>
-    </script>
 </body>
 
 </html>
