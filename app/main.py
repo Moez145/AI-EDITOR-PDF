@@ -6,9 +6,11 @@ from pydantic import BaseModel
 from sqlalchemy import Boolean, Integer, String, create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from app.routes.editor import router as eidtor_router
+from app.routes.landing_free import router as landing_router
 from app.routes.auth import router as auth_router
 from app.routes.profile import router as profile_router
 from app.models.user import User
+from app.routes.editor_route_unsigned import router as edited_route
 from app.models.pdf import PDF
 from app.models.chat import Chat
 from app.routes.pdf import router as pdf_routes
@@ -36,23 +38,7 @@ def landing_page(request: Request):
         name="landing_page.html",
         request= request
     )
-
-# for the sign_in page
-@app.get('/sign_in')
-def sign_in(request:Request):
-    return templates.TemplateResponse(
-        name='sign_in.html',
-        request=request
-    )
-
-# for the sign_up page
-@app.get('/sign_up')
-def sign_up(request:Request):
-    return templates.TemplateResponse(
-        name='sign_up.html',
-        request=request
-    )
-
+    
 # for the dashboard page
 @app.get('/dashboard')
 def dashboard(request:Request):
@@ -68,6 +54,8 @@ def history(request:Request):
         name='history.html',
         request=request
     )
+
+# for the editor page for Login Users
 @app.get("/editor/{pdfId}")
 def editor(request: Request, pdfId: int):
     return templates.TemplateResponse(
@@ -78,7 +66,10 @@ def editor(request: Request, pdfId: int):
         }
     )
 
+app.include_router(landing_router)
+
 app.include_router(eidtor_router)
+app.include_router(edited_route)
 
 # for authentication of the data
 app.include_router(auth_router)
