@@ -6,9 +6,14 @@ from sqlalchemy.orm import Session
 from datetime import date
 from app.dependencies import get_current_user
 from app.models.pdf import PDF
+import uuid
+from pypdf import PdfReader
+import secrets
+from app.models.pdf import PDF_UNSIGNED
 import fitz
 
 UPLOAD_FOLDER="uploads/original"
+UPLOAD_FOLDER_UNSIGNED='uploads/unsigned_pdf'
 
 def upload_pdf(file:UploadFile,user_id:int,db:Session):
 
@@ -33,6 +38,31 @@ def upload_pdf(file:UploadFile,user_id:int,db:Session):
     db.commit()
     db.refresh(pdf)
     return pdf
+
+def upload_pdf_unsigned(file_bytes: bytes, original_filename: str, db: Session) -> PDF_UNSIGNED:
+    unique_name = f"{uuid.uuid4().hex}.pdf"
+    file_path = os.path.join(UPLOAD_FOLDER_UNSIGNED, unique_name)
+
+    with open(file_path, "wb") as f:
+        f.write(file_bytes)
+
+    reader = PdfReader(file_path)
+    page_count = len(reader.pages)
+    file_size = os.path.getsize(file_path)
+
+    pdf_record = PDF_UNSIGNED(
+        token=secrets.token_urlsafe(32),   # unguessable, URL-safe
+        filename=original_filename,
+        file_path=file_path,
+        filesize=file_size,
+        file_pages=page_count
+    )
+    db.add(pdf_record)
+    db.commit()
+    db.refresh(pdf_record)
+
+    return pdf_record
+    
 
 def return_upload_pdf(user_id:int,db:Session):
     find_all_user_upload=db.query(PDF).filter(PDF.user_id==user_id).order_by(PDF.upload_time.desc()).all()

@@ -1,6 +1,7 @@
 /**
- * PDF Editor Application
- * Handles PDF rendering, zoom, navigation, thumbnails, and AI assistant panel
+ * DocuAI Free Editor (Unsigned / No-Login Flow)
+ * Handles file upload, PDF rendering, zoom, navigation, thumbnails,
+ * and AI assistant panel for users who are not signed in.
  */
 
 // ===============================================
@@ -25,7 +26,8 @@ const CONFIG = {
         ANIMATION_DURATION: 350
     },
     API: {
-        PDF_ENDPOINT: "/editor/pdf"
+        UPLOAD_ENDPOINT: "/profile/unsigned",
+        PDF_ENDPOINT: "/profile/unsigned/pdf"
     }
 };
 
@@ -34,14 +36,13 @@ const CONFIG = {
 // ===============================================
 const AppState = {
     pdf: null,
+    pdfToken: null,
     currentPage: 1,
     totalPages: 0,
     zoom: CONFIG.ZOOM.DEFAULT,
     isLoading: false,
     isResizing: false,
     fileSizeBytes: 0,
-    pdfId: null,
-    token: null,
 
     setPDF(doc) {
         this.pdf = doc;
@@ -77,6 +78,10 @@ const DOM = {
     pdfCanvas: document.querySelector(".pdf-canvas"),      // scroll container (for sizing)
     pdfPlaceholder: document.getElementById("pdfPlaceholder"),
 
+    // Upload
+    fileInput: document.getElementById("pdfFile"),
+    uploadBtn: document.getElementById("Upload_Button"),
+
     // Navbar
     zoomValue: document.querySelector(".zoom-value"),
     zoomOutBtn: document.getElementById("zoomOut"),
@@ -104,9 +109,6 @@ const DOM = {
     // Document info (size / page count in sidebar header)
     fileInfo: document.getElementById("file-info"),
     filePages: document.getElementById("file-pages"),
-
-    // Editor button (extracts text from the PDF)
-    pdfEditorBtn: document.getElementById("pdf_editor"),
 
     // Initialize context
     init() {
@@ -190,17 +192,15 @@ class PDFRenderer {
         }).promise;
     }
 
-    static async loadPDF(pdfId, token) {
+    /**
+     * Loads a previously uploaded unsigned PDF by its token
+     * and renders it into the viewer.
+     */
+    static async loadUnsignedPDF(token) {
         try {
             UIManager.setLoading(true);
 
-            // Fetch the PDF ourselves (instead of letting pdf.js fetch it) so we
-            // can read the custom X-Page-Count / X-Page-Size headers the backend sends.
-            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${token}`);
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch PDF: ${response.status}`);
@@ -214,6 +214,7 @@ class PDFRenderer {
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             const pdfDoc = await loadingTask.promise;
             AppState.setPDF(pdfDoc);
+            AppState.pdfToken = token;
 
             // Prefer backend-provided values; fall back to what pdf.js/the buffer tell us
             AppState.totalPages = Number.isFinite(headerPageCount) ? headerPageCount : pdfDoc.numPages;
@@ -226,7 +227,7 @@ class PDFRenderer {
 
             // Build sidebar thumbnails, then render first page
             await ThumbnailManager.build(pdfDoc);
-            await this.renderPage(AppState.currentPage);
+            await this.renderPage(1);
 
             // Hide placeholder, show canvas
             DOM.pdfPlaceholder.style.display = "none";
@@ -238,6 +239,62 @@ class PDFRenderer {
             UIManager.showError("Unable to load PDF. Please try again.");
             UIManager.setLoading(false);
         }
+    }
+}
+
+// ===============================================
+// UPLOAD MANAGEMENT
+// ===============================================
+class UploadManager {
+    static async uploadFile(file) {
+        if (!file) return;
+
+        if (file.type !== "application/pdf") {
+            UIManager.showError("Only PDF files are allowed.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            UIManager.setLoading(true);
+
+            const response = await fetch(CONFIG.API.UPLOAD_ENDPOINT, {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Upload failed.");
+            }
+
+            const data = await response.json();
+            // data = { token, filename, page_count, file_size }
+
+            await PDFRenderer.loadUnsignedPDF(data.token);
+        } catch (error) {
+            console.error(error);
+            UIManager.showError("Upload failed. Please try again.");
+            UIManager.setLoading(false);
+        }
+    }
+
+    static setupListeners() {
+        if (!DOM.uploadBtn || !DOM.fileInput) return;
+
+        // Clicking the visible button opens the hidden native file picker
+        DOM.uploadBtn.addEventListener("click", () => {
+            DOM.fileInput.click();
+        });
+
+        // Once a file is chosen, upload it
+        DOM.fileInput.addEventListener("change", () => {
+            const file = DOM.fileInput.files[0];
+            UploadManager.uploadFile(file);
+            // Reset so selecting the same file again still fires "change"
+            DOM.fileInput.value = "";
+        });
     }
 }
 
@@ -586,73 +643,6 @@ class UIManager {
 }
 
 // ===============================================
-// EDITOR / TEXT EXTRACTION
-// ===============================================
-class EditorManager {
-    /**
-     * Calls the backend to extract text from the currently loaded PDF
-     * and displays the result in the AI chat panel.
-     */
-    static async extractText() {
-        const { pdfId, token } = AppState;
-
-        if (!pdfId || !token) {
-            UIManager.showError("Missing PDF ID or authentication token");
-            return null;
-        }
-
-        try {
-            UIManager.setChatLoading(true);
-
-            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/edit_pdf`, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to load PDF text: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            // Adjust this line to match your backend's actual response shape
-            const extractedText = data.text ?? data.extracted_text ?? data.content ?? "";
-
-            this.displayExtractedText(extractedText);
-            return extractedText;
-        } catch (error) {
-            console.error("Text extraction failed:", error);
-            UIManager.showError("Failed to extract text from PDF");
-            return null;
-        } finally {
-            UIManager.setChatLoading(false);
-        }
-    }
-
-    static displayExtractedText(text) {
-        AIPanelManager.open();
-        ChatManager.addAIMessage(
-            text && text.trim().length
-                ? `Extracted text:\n\n${text}`
-                : "No text could be extracted from this PDF."
-        );
-    }
-
-    static setupListeners() {
-        if (!DOM.pdfEditorBtn) return;
-
-        DOM.pdfEditorBtn.addEventListener("click", async (e) => {
-            e.preventDefault();
-            DOM.pdfEditorBtn.disabled = true;
-            await this.extractText();
-            DOM.pdfEditorBtn.disabled = false;
-        });
-    }
-}
-
-// ===============================================
 // RESPONSIVE RESIZE HANDLER (Debounced)
 // ===============================================
 class ResizeHandler {
@@ -683,25 +673,11 @@ async function initializeApp() {
         PageNavigator.setupListeners();
         AIPanelManager.setupListeners();
         ChatManager.setupListeners();
+        UploadManager.setupListeners();
         ResizeHandler.init();
-        EditorManager.setupListeners();
 
-        const pdfId = window.location.pathname.split("/").pop();
-        const token = localStorage.getItem("access_token");
-
-        if (!pdfId || !token) {
-            UIManager.showError("Missing PDF ID or authentication token");
-            return;
-        }
-
-        AppState.pdfId = pdfId;
-        AppState.token = token;
-
-        await PDFRenderer.loadPDF(pdfId, token);
-
-        DOM.pageInput.value = AppState.currentPage;
-        DOM.pageInput.setAttribute("max", AppState.totalPages);
-        DOM.pageInput.setAttribute("aria-label", `Page 1 of ${AppState.totalPages}`);
+        // No auto-load here: unsigned users start with an empty viewer
+        // and only load a PDF once they upload one via UploadManager.
 
     } catch (error) {
         console.error("Application initialization failed:", error);

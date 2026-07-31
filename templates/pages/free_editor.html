@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{url_for('static',path='css/editor.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',path='css/free_editor.css')}}">
 </head>
 
 <body>
@@ -72,25 +72,17 @@
                     </div>
                     <div class="toolbar-divider"></div>
                     <button class="download-btn">
-                        <span class="btn-label" id="pdf_editor">PDF EDITOR</span>
+                        <span class="btn-label">PDF EDITOR</span>
                     </button>
                 </div>
 
-                <!-- Right: AI Toggle + Signout -->
+                <!-- Right: AI Toggle -->
                 <div class="navbar-actions">
                     <button class="ai-toggle-btn" id="aiToggleBtn" title="Toggle AI Panel">
                         <i class="fa-solid fa-robot"></i>
                         <span class="btn-label">AI Assistant</span>
                     </button>
                     <div class="nav-divider"></div>
-                    <div class="user-info">
-                        <img src="https://i.pravatar.cc/80?u=default" alt="User" class="user-avatar">
-                        <span class="user-name" id="username">User</span>
-                    </div>
-                    <a href="#" class="signout-btn" id="logout" title="Sign Out">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        <span class="btn-label">Sign Out</span>
-                    </a>
                 </div>
             </div>
 
@@ -100,6 +92,7 @@
                     <i class="fa-regular fa-file-pdf pdf-icon"></i>
                     <h2>No PDF Loaded</h2>
                     <p>Upload a document to preview it here.</p>
+                    <input type="file" id="pdfFile" accept=".pdf" hidden>
                     <button id="Upload_Button">
                         Select File
                     </button>
@@ -222,7 +215,7 @@
     <div class="ai-backdrop" id="aiBackdrop"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="{{ url_for('static', path='js/editor.js') }}"></script>
+    <script src="{{ url_for('static', path='js/free_editor.js') }}"></script>
 </body>
 
 </html>
