@@ -40,6 +40,8 @@ const AppState = {
     isLoading: false,
     isResizing: false,
     fileSizeBytes: 0,
+    pdfId: null,
+    token: null,
 
     setPDF(doc) {
         this.pdf = doc;
@@ -102,6 +104,9 @@ const DOM = {
     // Document info (size / page count in sidebar header)
     fileInfo: document.getElementById("file-info"),
     filePages: document.getElementById("file-pages"),
+
+    // Editor button (extracts text from the PDF)
+    pdfEditorBtn: document.getElementById("pdf_editor"),
 
     // Initialize context
     init() {
@@ -581,6 +586,73 @@ class UIManager {
 }
 
 // ===============================================
+// EDITOR / TEXT EXTRACTION
+// ===============================================
+class EditorManager {
+    /**
+     * Calls the backend to extract text from the currently loaded PDF
+     * and displays the result in the AI chat panel.
+     */
+    static async extractText() {
+        const { pdfId, token } = AppState;
+
+        if (!pdfId || !token) {
+            UIManager.showError("Missing PDF ID or authentication token");
+            return null;
+        }
+
+        try {
+            UIManager.setChatLoading(true);
+
+            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/edit_pdf`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to load PDF text: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Adjust this line to match your backend's actual response shape
+            const extractedText = data.text ?? data.extracted_text ?? data.content ?? "";
+
+            this.displayExtractedText(extractedText);
+            return extractedText;
+        } catch (error) {
+            console.error("Text extraction failed:", error);
+            UIManager.showError("Failed to extract text from PDF");
+            return null;
+        } finally {
+            UIManager.setChatLoading(false);
+        }
+    }
+
+    static displayExtractedText(text) {
+        AIPanelManager.open();
+        ChatManager.addAIMessage(
+            text && text.trim().length
+                ? `Extracted text:\n\n${text}`
+                : "No text could be extracted from this PDF."
+        );
+    }
+
+    static setupListeners() {
+        if (!DOM.pdfEditorBtn) return;
+
+        DOM.pdfEditorBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            DOM.pdfEditorBtn.disabled = true;
+            await this.extractText();
+            DOM.pdfEditorBtn.disabled = false;
+        });
+    }
+}
+
+// ===============================================
 // RESPONSIVE RESIZE HANDLER (Debounced)
 // ===============================================
 class ResizeHandler {
@@ -612,6 +684,7 @@ async function initializeApp() {
         AIPanelManager.setupListeners();
         ChatManager.setupListeners();
         ResizeHandler.init();
+        EditorManager.setupListeners();
 
         const pdfId = window.location.pathname.split("/").pop();
         const token = localStorage.getItem("access_token");
@@ -620,6 +693,9 @@ async function initializeApp() {
             UIManager.showError("Missing PDF ID or authentication token");
             return;
         }
+
+        AppState.pdfId = pdfId;
+        AppState.token = token;
 
         await PDFRenderer.loadPDF(pdfId, token);
 

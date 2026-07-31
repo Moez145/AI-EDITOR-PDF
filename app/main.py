@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Integer, String, create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from app.routes.pdf_editor import router as free_editor_router
 from app.routes.editor import router as eidtor_router
 from app.routes.landing_free import router as landing_router
 from app.routes.auth import router as auth_router
@@ -67,7 +68,7 @@ def editor(request: Request, pdfId: int):
     )
 
 app.include_router(landing_router)
-
+app.include_router(free_editor_router)
 app.include_router(eidtor_router)
 app.include_router(edited_route)
 
