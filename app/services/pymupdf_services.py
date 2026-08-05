@@ -9,7 +9,7 @@ def get_pdf_data(file_path):
     for page in doc:
         pages.append({
             "page": page.number,
-            "text": page.get_text('dict')
+            "text": page.get_text()
         })
     doc.close()
     return pages

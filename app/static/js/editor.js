@@ -25,7 +25,8 @@ const CONFIG = {
         ANIMATION_DURATION: 350
     },
     API: {
-        PDF_ENDPOINT: "/editor/pdf"
+        PDF_ENDPOINT: "/editor/pdf",
+        EDITOR_ENDPOINT: "/editor"
     }
 };
 
@@ -604,7 +605,7 @@ class EditorManager {
         try {
             UIManager.setChatLoading(true);
 
-            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/edit_pdf`, {
+            const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/text`, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -615,10 +616,12 @@ class EditorManager {
                 throw new Error(`Failed to load PDF text: ${response.status}`);
             }
 
-            const data = await response.json();
+            // Backend returns a list: [{ page: 0, text: "..." }, { page: 1, text: "..." }, ...]
+            const pages = await response.json();
 
-            // Adjust this line to match your backend's actual response shape
-            const extractedText = data.text ?? data.extracted_text ?? data.content ?? "";
+            const extractedText = Array.isArray(pages)
+                ? pages.map((p) => `--- Page ${p.page + 1} ---\n${p.text}`).join("\n\n")
+                : "";
 
             this.displayExtractedText(extractedText);
             return extractedText;
