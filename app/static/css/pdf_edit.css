@@ -1,0 +1,48 @@
+/* Left Sidebar Toolbar */
+#editor-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 90px;
+    height: 100vh;
+    background: #1f2937;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    gap: 15px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* Toolbar Buttons */
+#editor-toolbar button {
+    width: 70px;
+    height: 45px;
+    border: none;
+    border-radius: 8px;
+    background: #374151;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#editor-toolbar button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+#editor-toolbar button:active {
+    transform: scale(0.95);
+}
+
+/* Save Button Different Color */
+#saveBtn {
+    background: #16a34a;
+}
+
+#saveBtn:hover {
+    background: #15803d;
+}

@@ -7,7 +7,7 @@
     --primary-dark: #0284C7;
     --primary-light: #E0F2FE;
     --primary-glow: rgba(14, 165, 233, 0.25);
-    
+
     /* Semantic colors */
     --ocean-50: #f0f9ff;
     --ocean-100: #e0f2fe;
@@ -17,18 +17,18 @@
     --text-secondary: #0369a1;
     --text-muted: #64748b;
     --text-interactive: rgba(255, 255, 255, 0.85);
-    
+
     /* Backgrounds */
     --bg-white: #ffffff;
     --bg-light: #f0f9ff;
     --bg-navbar: #0a1628;
     --bg-hover: #0c2340;
-    
+
     /* Borders */
     --border-default: #bae6fd;
     --border-light: rgba(255, 255, 255, 0.1);
     --border-lighter: rgba(255, 255, 255, 0.08);
-    
+
     /* Spacing */
     --sp-xs: 4px;
     --sp-sm: 8px;
@@ -36,30 +36,30 @@
     --sp-lg: 16px;
     --sp-xl: 20px;
     --sp-2xl: 32px;
-    
+
     /* Layout */
     --navbar-h: 64px;
     --panel-w: 340px;
     --doc-w: 240px;
-    
+
     /* Border radius */
     --radius-sm: 7px;
     --radius-md: 8px;
     --radius-lg: 9px;
     --radius-xl: 12px;
     --radius-full: 50%;
-    
+
     /* Transitions */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.2s ease;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 3px rgba(14, 165, 233, 0.10);
     --shadow-md: 0 4px 12px rgba(14, 165, 233, 0.15);
     --shadow-lg: 0 10px 30px rgba(14, 165, 233, 0.18);
     --shadow-dark: 0 2px 12px rgba(0, 0, 0, 0.3);
     --shadow-dark-lg: -4px 0 24px rgba(0, 0, 0, 0.15);
-    
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
     --gradient-ocean: linear-gradient(135deg, var(--ocean-100), var(--ocean-200));
@@ -106,6 +106,55 @@ img {
     max-width: 100%;
     height: auto;
     display: block;
+}
+
+/* Left Sidebar Toolbar */
+#editor-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 90px;
+    height: 100vh;
+    background: #1f2937;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    gap: 15px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* Toolbar Buttons */
+#editor-toolbar button {
+    width: 70px;
+    height: 45px;
+    border: none;
+    border-radius: 8px;
+    background: #374151;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#editor-toolbar button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+#editor-toolbar button:active {
+    transform: scale(0.95);
+}
+
+/* Save Button Different Color */
+#saveBtn {
+    background: #16a34a;
+}
+
+#saveBtn:hover {
+    background: #15803d;
 }
 
 /* ===============================================
@@ -196,8 +245,8 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     gap: var(--sp-md);
-    gap:15px;
-    padding:15px;
+    gap: 15px;
+    padding: 15px;
 }
 
 .thumbnail-list::-webkit-scrollbar {
@@ -228,7 +277,7 @@ input:focus-visible {
     border-radius: var(--radius-lg);
     border: 2px solid transparent;
     transition: var(--transition);
-    cursor:pointer;
+    cursor: pointer;
     box-shadow: var(--shadow-sm);
 }
 
@@ -815,6 +864,7 @@ input:focus-visible {
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -971,6 +1021,7 @@ input:focus-visible {
         opacity: 0;
         transform: translateY(16px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1214,6 +1265,7 @@ input:focus-visible {
    PRINT STYLES
 =============================================== */
 @media print {
+
     .top-navbar,
     .document-panel,
     .ai-panel {

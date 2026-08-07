@@ -43,6 +43,7 @@ const AppState = {
     fileSizeBytes: 0,
     pdfId: null,
     token: null,
+    isEditingText: false,
 
     setPDF(doc) {
         this.pdf = doc;
@@ -108,6 +109,9 @@ const DOM = {
 
     // Editor button (extracts text from the PDF)
     pdfEditorBtn: document.getElementById("pdf_editor"),
+
+    // Text-edit overlay (created dynamically by TextEditManager, cached once built)
+    textEditLayer: null,
 
     // Initialize context
     init() {
@@ -411,72 +415,6 @@ class ThumbnailManager {
 }
 
 // ===============================================
-// AI PANEL MANAGEMENT
-// ===============================================
-class AIPanelManager {
-    static open() {
-        DOM.aiPanel.classList.add("open");
-        DOM.aiBackdrop.classList.add("show");
-        DOM.aiToggleBtn.classList.add("active");
-        DOM.aiToggleBtn.setAttribute("aria-expanded", "true");
-    }
-
-    static close() {
-        DOM.aiPanel.classList.remove("open");
-        DOM.aiBackdrop.classList.remove("show");
-        DOM.aiToggleBtn.classList.remove("active");
-        DOM.aiToggleBtn.setAttribute("aria-expanded", "false");
-    }
-
-    static toggle() {
-        if (DOM.aiPanel.classList.contains("open")) {
-            this.close();
-        } else {
-            this.open();
-        }
-    }
-
-    static setupListeners() {
-        DOM.aiToggleBtn.addEventListener("click", () => this.toggle());
-        DOM.aiCloseBtn.addEventListener("click", () => this.close());
-        DOM.aiBackdrop.addEventListener("click", () => this.close());
-
-        // Close on Escape key
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && DOM.aiPanel.classList.contains("open")) {
-                this.close();
-            }
-        });
-
-        this.setupTabs();
-    }
-
-    static setupTabs() {
-        DOM.tabs.forEach((tab) => {
-            tab.addEventListener("click", () => {
-                DOM.tabs.forEach((t) => t.classList.remove("active"));
-                tab.classList.add("active");
-                tab.setAttribute("aria-selected", "true");
-            });
-
-            tab.addEventListener("keydown", (e) => {
-                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                    e.preventDefault();
-                    const tabs = Array.from(DOM.tabs);
-                    const currentIndex = tabs.indexOf(tab);
-                    const nextIndex =
-                        e.key === "ArrowRight"
-                            ? (currentIndex + 1) % tabs.length
-                            : (currentIndex - 1 + tabs.length) % tabs.length;
-                    tabs[nextIndex].click();
-                    tabs[nextIndex].focus();
-                }
-            });
-        });
-    }
-}
-
-// ===============================================
 // CHAT MANAGEMENT
 // ===============================================
 class ChatManager {
@@ -587,72 +525,455 @@ class UIManager {
 }
 
 // ===============================================
-// EDITOR / TEXT EXTRACTION
+// TEXT EDIT OVERLAY (span-based, positioned to match
+// the original PDF layout: each text run from
+// get_pdf_data() is rendered as an absolutely
+// positioned, individually editable element on top
+// of a page-sized box. Images render underneath,
+// non-editable. bbox/font/size/color/flags are kept
+// intact per span and only .text is ever mutated, so
+// the payload sent back to PUT /text matches exactly
+// what update_pdf_text() on the backend expects.)
 // ===============================================
-class EditorManager {
+class TextEditManager {
     /**
-     * Calls the backend to extract text from the currently loaded PDF
-     * and displays the result in the AI chat panel.
+     * Lazily builds the overlay layer and inserts it into the same
+     * scroll container that holds the PDF canvas, so it occupies the
+     * same visual space.
      */
-    static async extractText() {
+    static ensureLayer() {
+        if (DOM.textEditLayer) return DOM.textEditLayer;
+
+        const layer = document.createElement("div");
+        layer.id = "textEditLayer";
+        layer.style.display = "none";
+        layer.style.flexDirection = "column";
+        layer.style.alignItems = "center";
+        layer.style.gap = "24px";
+        layer.style.width = "100%";
+        layer.style.height = "100%";
+        layer.style.overflowY = "auto";
+        layer.style.boxSizing = "border-box";
+        layer.style.padding = "20px";
+
+        // Small toolbar: back to PDF view / save state
+        const toolbar = document.createElement("div");
+        toolbar.style.position = "sticky";
+        toolbar.style.top = "0";
+        toolbar.style.zIndex = "5";
+        toolbar.style.display = "flex";
+        toolbar.style.gap = "10px";
+        toolbar.style.alignSelf = "flex-start";
+        toolbar.style.background = "#fff";
+        toolbar.style.padding = "6px 0";
+
+        const backBtn = document.createElement("button");
+        backBtn.type = "button";
+        backBtn.textContent = "← Back to PDF view";
+        backBtn.style.cursor = "pointer";
+        backBtn.style.padding = "6px 12px";
+        backBtn.style.border = "1px solid #d0d5dd";
+        backBtn.style.borderRadius = "6px";
+        backBtn.style.background = "#f9fafb";
+        backBtn.addEventListener("click", () => TextEditManager.hide());
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.textContent = "Save changes";
+        saveBtn.style.cursor = "pointer";
+        saveBtn.style.padding = "6px 12px";
+        saveBtn.style.border = "1px solid #2563eb";
+        saveBtn.style.borderRadius = "6px";
+        saveBtn.style.background = "#2563eb";
+        saveBtn.style.color = "#fff";
+        saveBtn.addEventListener("click", () => TextEditManager.saveEdits());
+
+        toolbar.appendChild(backBtn);
+        toolbar.appendChild(saveBtn);
+        layer.appendChild(toolbar);
+
+        const pagesWrapper = document.createElement("div");
+        pagesWrapper.id = "textEditPages";
+        pagesWrapper.style.display = "flex";
+        pagesWrapper.style.flexDirection = "column";
+        pagesWrapper.style.gap = "24px";
+        pagesWrapper.style.width = "100%";
+        pagesWrapper.style.alignItems = "center";
+        layer.appendChild(pagesWrapper);
+
+        // Insert into the same container the canvas lives in so it
+        // takes over the same viewing area.
+        DOM.pdfCanvas.appendChild(layer);
+        DOM.textEditLayer = layer;
+        return layer;
+    }
+
+    /**
+     * Renders one absolutely-positioned page box per page, with each
+     * text span placed at its scaled bbox and made contenteditable,
+     * and each image placed underneath (non-editable).
+     *
+     * @param {{page:number, width:number, height:number,
+     *           spans:{text:string,bbox:number[],font:string,size:number,color:number,flags:number}[],
+     *           images:{bbox:number[],ext:string,data:string}[]}[]} pages
+     */
+    static show(pages) {
+        const layer = this.ensureLayer();
+        const pagesWrapper = layer.querySelector("#textEditPages");
+        pagesWrapper.innerHTML = "";
+
+        const list = Array.isArray(pages) ? pages : [];
+        // Keep the original structure around so collectEdits() can merge
+        // edited text back in without losing bbox/font/size/color/flags.
+        this._pagesData = list;
+
+        if (!list.length) {
+            const empty = document.createElement("p");
+            empty.textContent = "No text could be extracted from this PDF.";
+            pagesWrapper.appendChild(empty);
+        } else {
+            // Fit page width to the available container (capped so huge
+            // pages don't blow out the layout on wide screens).
+            const containerWidth = Math.min(DOM.pdfCanvas.clientWidth - 80, 800);
+
+            list.forEach((p) => {
+                const scale = containerWidth / p.width;
+                const pageHeight = p.height * scale;
+
+                const pageBox = document.createElement("div");
+                pageBox.className = "text-edit-page";
+                pageBox.dataset.page = p.page;
+                pageBox.dataset.scale = scale;
+                pageBox.style.position = "relative";
+                pageBox.style.width = `${containerWidth}px`;
+                pageBox.style.height = `${pageHeight}px`;
+                pageBox.style.background = "#fff";
+                pageBox.style.border = "1px solid #e4e7ec";
+                pageBox.style.borderRadius = "4px";
+                pageBox.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
+                pageBox.style.overflow = "hidden";
+                pageBox.style.flexShrink = "0";
+
+                // Images render first (underneath), non-editable, and are
+                // never sent back to the server — only spans are edited.
+                (p.images || []).forEach((img) => {
+                    const [x0, y0, x1, y1] = img.bbox;
+                    const imgEl = document.createElement("img");
+                    imgEl.src = `data:image/${img.ext};base64,${img.data}`;
+                    imgEl.style.position = "absolute";
+                    imgEl.style.left = `${x0 * scale}px`;
+                    imgEl.style.top = `${y0 * scale}px`;
+                    imgEl.style.width = `${(x1 - x0) * scale}px`;
+                    imgEl.style.height = `${(y1 - y0) * scale}px`;
+                    imgEl.style.pointerEvents = "none";
+                    pageBox.appendChild(imgEl);
+                });
+
+                // Each text span is its own editable element, positioned
+                // to match where PyMuPDF found it in the original PDF.
+                (p.spans || []).forEach((span, idx) => {
+                    const [x0, y0, x1, y1] = span.bbox;
+                    const el = document.createElement("div");
+                    el.className = "text-edit-span";
+                    el.contentEditable = "true";
+                    el.spellcheck = true;
+                    el.dataset.spanIndex = idx;
+                    el.textContent = span.text;
+
+                    el.style.position = "absolute";
+                    el.style.left = `${x0 * scale}px`;
+                    el.style.top = `${y0 * scale}px`;
+                    el.style.minWidth = `${(x1 - x0) * scale}px`;
+                    el.style.minHeight = `${(y1 - y0) * scale}px`;
+                    el.style.fontSize = `${span.size * scale}px`;
+                    el.style.lineHeight = "1";
+                    el.style.color = this._intToCss(span.color);
+                    el.style.fontWeight = (span.flags & 16) ? "bold" : "normal";
+                    el.style.fontStyle = (span.flags & 2) ? "italic" : "normal";
+                    // Wrap in the browser too (not just on save) so what the
+                    // user sees while editing is close to what gets redrawn
+                    // server-side, instead of a single unbroken line.
+                    el.style.whiteSpace = "pre-wrap";
+                    el.style.wordBreak = "break-word";
+                    el.style.outline = "none";
+                    el.style.cursor = "text";
+                    el.style.padding = "0";
+                    el.style.border = "1px solid transparent";
+
+                    el.addEventListener("focus", () => {
+                        el.style.border = "1px dashed #2563eb";
+                        el.style.background = "rgba(37,99,235,0.05)";
+                    });
+                    el.addEventListener("blur", () => {
+                        el.style.border = "1px solid transparent";
+                        el.style.background = "transparent";
+                    });
+
+                    pageBox.appendChild(el);
+                });
+
+                pagesWrapper.appendChild(pageBox);
+            });
+        }
+
+        // Swap the canvas view out for the editable text view
+        DOM.canvas.style.display = "none";
+        if (DOM.pdfPlaceholder) DOM.pdfPlaceholder.style.display = "none";
+        layer.style.display = "flex";
+        AppState.isEditingText = true;
+    }
+
+    static _intToCss(colorInt) {
+        const r = (colorInt >> 16) & 255;
+        const g = (colorInt >> 8) & 255;
+        const b = colorInt & 255;
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    /** Switch back to the normal PDF canvas view */
+    static hide() {
+        if (DOM.textEditLayer) {
+            DOM.textEditLayer.style.display = "none";
+        }
+        AppState.isEditingText = false;
+        if (AppState.pdf) {
+            DOM.canvas.style.display = "block";
+            PDFRenderer.renderPage(AppState.currentPage);
+        } else if (DOM.pdfPlaceholder) {
+            DOM.pdfPlaceholder.style.display = "flex";
+        }
+    }
+
+    /**
+     * Merges edited text back into the original per-page span structure.
+     * bbox/font/size/color/flags are carried over untouched from the data
+     * `show()` was given — only `.text` is replaced with whatever the user
+     * typed. This keeps the payload shape identical to what update_pdf_text()
+     * expects on the backend (wrapping to the original bbox width happens
+     * server-side).
+     */
+    static collectEdits() {
+        if (!DOM.textEditLayer || !this._pagesData) return [];
+
+        const pageBoxes = DOM.textEditLayer.querySelectorAll(".text-edit-page");
+
+        return Array.from(pageBoxes).map((pageBox) => {
+            const pageNum = parseInt(pageBox.dataset.page, 10);
+            const original = this._pagesData.find((p) => p.page === pageNum);
+            const spanEls = pageBox.querySelectorAll(".text-edit-span");
+
+            const spans = Array.from(spanEls).map((el) => {
+                const idx = parseInt(el.dataset.spanIndex, 10);
+                const originalSpan = original.spans[idx];
+                return {
+                    ...originalSpan,
+                    text: el.innerText
+                };
+            });
+
+            return { page: pageNum, spans };
+        });
+    }
+
+    /**
+     * Sends the edited spans back to the backend, which redacts each
+     * original span region and redraws the (possibly changed) text,
+     * word-wrapped to fit the original bbox width.
+     */
+    static async saveEdits() {
+        const edited = this.collectEdits();
         const { pdfId, token } = AppState;
 
         if (!pdfId || !token) {
             UIManager.showError("Missing PDF ID or authentication token");
-            return null;
+            return;
         }
 
         try {
-            UIManager.setChatLoading(true);
-
             const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/text`, {
-                method: "GET",
+                method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ pages: edited })
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to load PDF text: ${response.status}`);
+                throw new Error(`Failed to save: ${response.status}`);
             }
 
-            // Backend returns a list: [{ page: 0, text: "..." }, { page: 1, text: "..." }, ...]
-            const pages = await response.json();
-
-            const extractedText = Array.isArray(pages)
-                ? pages.map((p) => `--- Page ${p.page + 1} ---\n${p.text}`).join("\n\n")
-                : "";
-
-            this.displayExtractedText(extractedText);
-            return extractedText;
+            ChatManager.addAIMessage("Your edits were saved.");
         } catch (error) {
-            console.error("Text extraction failed:", error);
-            UIManager.showError("Failed to extract text from PDF");
-            return null;
-        } finally {
-            UIManager.setChatLoading(false);
+            console.error("Saving edited text failed:", error);
+            UIManager.showError("Failed to save your edits");
         }
     }
+}
 
-    static displayExtractedText(text) {
-        AIPanelManager.open();
-        ChatManager.addAIMessage(
-            text && text.trim().length
-                ? `Extracted text:\n\n${text}`
-                : "No text could be extracted from this PDF."
-        );
+// ===============================================
+// EDITOR / TEXT EXTRACTION + SIDEBAR CONTROL
+// ===============================================
+class EditorManager {
+  /**
+   * Shows the sidebar (AI panel + editor toolbar), extracts text from
+   * the current PDF, and renders it as editable content in the canvas area.
+   */
+  static async extractText() {
+    const { pdfId, token } = AppState;
+
+    if (!pdfId || !token) {
+      UIManager.showError("Missing PDF ID or authentication token");
+      return null;
     }
 
-    static setupListeners() {
-        if (!DOM.pdfEditorBtn) return;
+    try {
+      // 1. Show the sidebar / toolbar
+      this.showSidebar();
 
-        DOM.pdfEditorBtn.addEventListener("click", async (e) => {
-            e.preventDefault();
-            DOM.pdfEditorBtn.disabled = true;
-            await this.extractText();
-            DOM.pdfEditorBtn.disabled = false;
-        });
+      UIManager.setChatLoading(true);
+
+      const response = await fetch(`${CONFIG.API.PDF_ENDPOINT}/${pdfId}/text`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load PDF text: ${response.status}`);
+      }
+
+      // Backend returns: [{ page, width, height, spans:[...], images:[...] }, ...]
+      const pages = await response.json();
+
+      // Render the extracted text directly on the canvas area, editable
+      TextEditManager.show(pages);
+
+      // Short confirmation in chat instead of dumping the full text there
+      const spanCount = Array.isArray(pages)
+        ? pages.reduce((sum, p) => sum + (p.spans ? p.spans.length : 0), 0)
+        : 0;
+
+      ChatManager.addAIMessage(
+        Array.isArray(pages) && pages.length
+          ? `Extracted text from ${pages.length} page${pages.length === 1 ? "" : "s"} (${spanCount} text blocks). You can edit it directly in the viewer.`
+          : "No text could be extracted from this PDF."
+      );
+
+      return pages;
+    } catch (error) {
+      console.error("Text extraction failed:", error);
+      UIManager.showError("Failed to extract text from PDF");
+      return null;
+    } finally {
+      UIManager.setChatLoading(false);
     }
+  }
+
+  /** Show AI panel + editor toolbar */
+  static showSidebar() {
+    const toolbar = document.getElementById("editor-toolbar");
+    if (toolbar) {
+      toolbar.style.display = "flex";
+      toolbar.classList.add("show");
+    }
+    AIPanelManager.open(); // opens the AI panel
+  }
+
+  /** Hide AI panel + editor toolbar */
+  static hideSidebar() {
+    const toolbar = document.getElementById("editor-toolbar");
+    if (toolbar) {
+      toolbar.classList.remove("show");
+      // Optional: hide completely after animation
+      // toolbar.style.display = "none";
+    }
+    AIPanelManager.close();
+  }
+
+  static setupListeners() {
+    if (!DOM.pdfEditorBtn) return;
+
+    DOM.pdfEditorBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      DOM.pdfEditorBtn.disabled = true;
+      await this.extractText();
+      DOM.pdfEditorBtn.disabled = false;
+    });
+  }
+}
+
+// ===============================================
+// AI PANEL MANAGEMENT
+// ===============================================
+class AIPanelManager {
+  static open() {
+    DOM.aiPanel.classList.add("open");
+    DOM.aiBackdrop.classList.add("show");
+    DOM.aiToggleBtn.classList.add("active");
+    DOM.aiToggleBtn.setAttribute("aria-expanded", "true");
+  }
+
+  static close() {
+    DOM.aiPanel.classList.remove("open");
+    DOM.aiBackdrop.classList.remove("show");
+    DOM.aiToggleBtn.classList.remove("active");
+    DOM.aiToggleBtn.setAttribute("aria-expanded", "false");
+
+    // Also hide the editor toolbar when the panel is closed
+    const toolbar = document.getElementById("editor-toolbar");
+    if (toolbar) {
+      toolbar.classList.remove("show");
+    }
+  }
+
+  static toggle() {
+    if (DOM.aiPanel.classList.contains("open")) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  static setupListeners() {
+    DOM.aiToggleBtn.addEventListener("click", () => this.toggle());
+    DOM.aiCloseBtn.addEventListener("click", () => this.close());
+    DOM.aiBackdrop.addEventListener("click", () => this.close());
+
+    // Close on Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && DOM.aiPanel.classList.contains("open")) {
+        this.close();
+      }
+    });
+
+    this.setupTabs();
+  }
+
+  static setupTabs() {
+    DOM.tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        DOM.tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+      });
+
+      tab.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          const tabs = Array.from(DOM.tabs);
+          const currentIndex = tabs.indexOf(tab);
+          const nextIndex =
+            e.key === "ArrowRight"
+              ? (currentIndex + 1) % tabs.length
+              : (currentIndex - 1 + tabs.length) % tabs.length;
+          tabs[nextIndex].click();
+          tabs[nextIndex].focus();
+        }
+      });
+    });
+  }
 }
 
 // ===============================================
@@ -666,7 +987,7 @@ class ResizeHandler {
             AppState.isResizing = true;
 
             resizeTimeout = setTimeout(() => {
-                if (AppState.pdf) {
+                if (AppState.pdf && !AppState.isEditingText) {
                     PDFRenderer.renderPage(AppState.currentPage);
                 }
                 AppState.isResizing = false;
@@ -679,44 +1000,52 @@ class ResizeHandler {
 // APPLICATION INITIALIZATION
 // ===============================================
 async function initializeApp() {
-    try {
-        await PDFRenderer.initialize();
+  try {
+    await PDFRenderer.initialize();
+    ZoomManager.setupListeners();
+    PageNavigator.setupListeners();
+    AIPanelManager.setupListeners();
+    ChatManager.setupListeners();
+    ResizeHandler.init();
+    EditorManager.setupListeners();
 
-        ZoomManager.setupListeners();
-        PageNavigator.setupListeners();
-        AIPanelManager.setupListeners();
-        ChatManager.setupListeners();
-        ResizeHandler.init();
-        EditorManager.setupListeners();
-
-        const pdfId = window.location.pathname.split("/").pop();
-        const token = localStorage.getItem("access_token");
-
-        if (!pdfId || !token) {
-            UIManager.showError("Missing PDF ID or authentication token");
-            return;
-        }
-
-        AppState.pdfId = pdfId;
-        AppState.token = token;
-
-        await PDFRenderer.loadPDF(pdfId, token);
-
-        DOM.pageInput.value = AppState.currentPage;
-        DOM.pageInput.setAttribute("max", AppState.totalPages);
-        DOM.pageInput.setAttribute("aria-label", `Page 1 of ${AppState.totalPages}`);
-
-    } catch (error) {
-        console.error("Application initialization failed:", error);
-        UIManager.showError("Failed to initialize the application");
+    // Hide toolbar by default
+    const toolbar = document.getElementById("editor-toolbar");
+    if (toolbar) {
+      toolbar.style.display = "none";
+      toolbar.classList.remove("show");
     }
+
+    const pdfId = window.location.pathname.split("/").pop();
+    const token = localStorage.getItem("access_token");
+
+    if (!pdfId || !token) {
+      UIManager.showError("Missing PDF ID or authentication token");
+      return;
+    }
+
+    AppState.pdfId = pdfId;
+    AppState.token = token;
+
+    await PDFRenderer.loadPDF(pdfId, token);
+
+    DOM.pageInput.value = AppState.currentPage;
+    DOM.pageInput.setAttribute("max", AppState.totalPages);
+    DOM.pageInput.setAttribute(
+      "aria-label",
+      `Page 1 of ${AppState.totalPages}`
+    );
+  } catch (error) {
+    console.error("Application initialization failed:", error);
+    UIManager.showError("Failed to initialize the application");
+  }
 }
 
 // ===============================================
 // START APPLICATION
 // ===============================================
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeApp);
+  document.addEventListener("DOMContentLoaded", initializeApp);
 } else {
-    initializeApp();
+  initializeApp();
 }
